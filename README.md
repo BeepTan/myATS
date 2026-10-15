@@ -74,7 +74,7 @@ flowchart TD
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/<your-username>/myATS.git
+git clone https://github.com/BeepTan/myATS.git
 cd myATS
 ```
 
