@@ -1,0 +1,82 @@
+@inherits LayoutComponentBase
+@using ATS.Blazor.Services
+@inject RoleStateService RoleState
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4 d-flex justify-content-between align-items-center bg-white shadow-sm border-bottom">
+            <div class="d-flex align-items-center gap-3">
+                <span class="fw-semibold text-secondary small">Active Portal Role:</span>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" 
+                            class="btn @(RoleState.IsCandidate ? "btn-primary fw-bold" : "btn-outline-primary")" 
+                            @onclick="() => SetRole(AppRole.Candidate)">
+                        <i class="bi bi-person-fill me-1"></i> Candidate View
+                    </button>
+                    <button type="button" 
+                            class="btn @(RoleState.IsAdmin ? "btn-danger fw-bold" : "btn-outline-danger")" 
+                            @onclick="() => SetRole(AppRole.Admin)">
+                        <i class="bi bi-shield-lock-fill me-1"></i> Admin / Recruiter
+                    </button>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                @if (RoleState.IsAdmin)
+                {
+                    <span class="badge bg-danger px-3 py-2"><i class="bi bi-shield-lock me-1"></i> Admin Privileges Active</span>
+                }
+                else if (RoleState.IsCandidate)
+                {
+                    <span class="badge bg-primary px-3 py-2"><i class="bi bi-person me-1"></i> Candidate Mode</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary px-3 py-2">Role Not Selected</span>
+                }
+                <a href="/" class="btn btn-sm btn-link text-decoration-none ms-2">Role Hub</a>
+            </div>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        RoleState.OnChange += StateHasChanged;
+    }
+
+    private void SetRole(AppRole role)
+    {
+        RoleState.SelectRole(role);
+        if (role == AppRole.Admin && !Navigation.Uri.Contains("/admin"))
+        {
+            Navigation.NavigateTo("admin/candidates");
+        }
+        else if (role == AppRole.Candidate && Navigation.Uri.Contains("/admin"))
+        {
+            Navigation.NavigateTo("apply");
+        }
+    }
+
+    public void Dispose()
+    {
+        RoleState.OnChange -= StateHasChanged;
+    }
+}

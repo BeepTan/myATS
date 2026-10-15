@@ -1,0 +1,182 @@
+@page "/admin/jobs"
+@using Microsoft.EntityFrameworkCore
+@using ATS.Blazor.Data
+@using ATS.Blazor.Data.Entities
+@using ATS.Blazor.Services
+@inject AtsDbContext DbContext
+@inject RoleStateService RoleState
+@rendermode InteractiveServer
+
+<PageTitle>Admin - Job Rubrics & Thresholds</PageTitle>
+
+<div class="container-fluid py-4">
+    @if (!RoleState.IsAdmin)
+    {
+        <div class="row justify-content-center py-5">
+            <div class="col-md-7">
+                <div class="card shadow border-danger text-center p-5">
+                    <div class="card-body">
+                        <div class="text-danger mb-3">
+                            <i class="bi bi-shield-lock-fill display-3"></i>
+                        </div>
+                        <h3 class="fw-bold text-danger mb-2">Access Restricted</h3>
+                        <p class="text-muted mb-4 lead">
+                            Job configuration is reserved for Recruiters and Administrators. You are currently in <strong>@(RoleState.HasRole ? "Candidate" : "Unselected")</strong> mode.
+                        </p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <button class="btn btn-danger btn-lg px-4" @onclick="() => RoleState.SelectRole(AppRole.Admin)">
+                                <i class="bi bi-shield-check me-2"></i>Switch to Admin Role
+                            </button>
+                            <a href="/" class="btn btn-outline-secondary btn-lg px-4">
+                                Back to Role Selection
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1"><i class="bi bi-briefcase me-2"></i>Job Postings & Evaluation Thresholds</h3>
+                <p class="text-muted mb-0">Configure evaluation rubrics, mandatory skills, and minimum cutoff scores for automated AI filtering.</p>
+            </div>
+            <button class="btn btn-primary" @onclick="OpenCreateModal">
+                <i class="bi bi-plus-lg me-1"></i> New Job Posting
+            </button>
+        </div>
+
+        @if (jobList == null)
+        {
+            <div class="spinner-border text-primary" role="status"></div>
+        }
+        else
+    {
+        <div class="row g-4">
+            @foreach (var job in jobList)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                            <span class="badge bg-primary">@job.Department</span>
+                            <span class="badge bg-warning text-dark fw-bold">Min Cutoff: @job.MinPassingScore pts</span>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold">@job.Title</h5>
+                            <p class="card-text text-muted small" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                                @job.Description
+                            </p>
+                            <div class="mt-3">
+                                <span class="fw-semibold small text-secondary">Mandatory Skills:</span>
+                                <div class="mt-1">
+                                    @foreach (var skill in job.RequiredSkills.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                                    {
+                                        <span class="badge bg-light text-dark border me-1 mb-1">@skill.Trim()</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Applications: @job.Applications.Count</small>
+                            <a href="/admin/candidates?jobId=@job.Id" class="btn btn-sm btn-outline-primary">
+                                View Candidates <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+</div>
+
+@if (showModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">Create New Job Posting</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <EditForm Model="@newJob" OnValidSubmit="HandleSaveJob">
+                        <DataAnnotationsValidator />
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Job Title *</label>
+                            <InputText class="form-control" @bind-Value="newJob.Title" placeholder="e.g. Senior Backend Engineer" required />
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Department</label>
+                                <InputText class="form-control" @bind-Value="newJob.Department" placeholder="e.g. Engineering" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Minimum Passing Threshold (0-100) *</label>
+                                <InputNumber class="form-control" @bind-Value="newJob.MinPassingScore" min="0" max="100" />
+                                <div class="form-text">Candidates scoring below this will be categorized as Rejected.</div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Mandatory Skills (comma-separated)</label>
+                            <InputText class="form-control" @bind-Value="newJob.RequiredSkills" placeholder="e.g. C#, .NET 9, SQLite, Python, Docker" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Job Description & Responsibilities *</label>
+                            <InputTextArea class="form-control" rows="4" @bind-Value="newJob.Description" placeholder="Detailed role responsibilities, tech stack, and qualifications..." required />
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Job Posting</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<JobPosting>? jobList;
+    private bool showModal = false;
+    private JobPosting newJob = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadJobsAsync();
+    }
+
+    private async Task LoadJobsAsync()
+    {
+        jobList = await DbContext.JobPostings
+            .Include(j => j.Applications)
+            .OrderByDescending(j => j.CreatedAt)
+            .ToListAsync();
+    }
+
+    private void OpenCreateModal()
+    {
+        newJob = new JobPosting
+        {
+            MinPassingScore = 70.0,
+            Department = "Engineering",
+            CriteriaJson = "[{\"category\":\"Technical Skills\",\"weight_percentage\":40.0,\"instructions\":\"Assess technical depth\"},{\"category\":\"Experience\",\"weight_percentage\":40.0,\"instructions\":\"Years in role\"},{\"category\":\"Education\",\"weight_percentage\":20.0,\"instructions\":\"Degree or certifications\"}]"
+        };
+        showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+    }
+
+    private async Task HandleSaveJob()
+    {
+        DbContext.JobPostings.Add(newJob);
+        await DbContext.SaveChangesAsync();
+        showModal = false;
+        await LoadJobsAsync();
+    }
+}

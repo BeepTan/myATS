@@ -1,0 +1,95 @@
+@page "/"
+@using ATS.Blazor.Services
+@inject RoleStateService RoleState
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Select Role - myATS Portal</PageTitle>
+
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <div class="display-5 fw-bold text-primary mb-2">
+            <i class="bi bi-cpu me-2"></i>myATS AI Evaluation Portal
+        </div>
+        <p class="lead text-muted mx-auto" style="max-width: 650px;">
+            Please select your role to access the corresponding applicant submission portal or recruiter candidate ranking dashboard.
+        </p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+        <!-- Role 1: Candidate -->
+        <div class="col-md-5">
+            <div class="card h-100 shadow-sm border-2 @(RoleState.IsCandidate ? "border-primary" : "border-light") text-center p-4 hover-shadow transition">
+                <div class="card-body d-flex flex-column">
+                    <div class="my-3">
+                        <div class="bg-primary-subtle text-primary rounded-circle d-inline-flex p-4 mb-3">
+                            <i class="bi bi-person-workspace display-4"></i>
+                        </div>
+                        <h3 class="fw-bold">Job Applicant</h3>
+                        <p class="text-muted mt-2">
+                            Apply for open positions, upload your resume (PDF/Image), and let Multimodal AI extract and auto-fill your profile details.
+                        </p>
+                    </div>
+
+                    <div class="mt-auto pt-3">
+                        <button class="btn btn-primary btn-lg w-100 fw-semibold" @onclick="SelectCandidateRole">
+                            <i class="bi bi-file-earmark-arrow-up me-2"></i>Enter as Candidate
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role 2: Recruiter / Admin -->
+        <div class="col-md-5">
+            <div class="card h-100 shadow-sm border-2 @(RoleState.IsAdmin ? "border-danger" : "border-light") text-center p-4 hover-shadow transition">
+                <div class="card-body d-flex flex-column">
+                    <div class="my-3">
+                        <div class="bg-danger-subtle text-danger rounded-circle d-inline-flex p-4 mb-3">
+                            <i class="bi bi-shield-lock-fill display-4"></i>
+                        </div>
+                        <h3 class="fw-bold">Recruiter / Admin</h3>
+                        <p class="text-muted mt-2">
+                            Configure job rubrics, weighted evaluation categories, set minimum cutoff thresholds, and inspect AI-ranked candidate leaderboards.
+                        </p>
+                    </div>
+
+                    <div class="mt-auto pt-3">
+                        <button class="btn btn-danger btn-lg w-100 fw-semibold" @onclick="SelectAdminRole">
+                            <i class="bi bi-speedometer2 me-2"></i>Enter as Recruiter / Admin
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (RoleState.HasRole)
+    {
+        <div class="text-center mt-5">
+            <div class="alert alert-light border d-inline-block px-4 py-3 shadow-sm">
+                <span class="me-2 text-muted">Currently Active Role:</span>
+                <span class="badge @(RoleState.IsAdmin ? "bg-danger" : "bg-primary") px-3 py-2 fs-6">
+                    @(RoleState.IsAdmin ? "Admin / Recruiter" : "Candidate / Applicant")
+                </span>
+                <button class="btn btn-sm btn-outline-secondary ms-3" @onclick="() => RoleState.ResetRole()">
+                    <i class="bi bi-arrow-repeat me-1"></i>Reset Role
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private void SelectCandidateRole()
+    {
+        RoleState.SelectRole(AppRole.Candidate);
+        Navigation.NavigateTo("apply");
+    }
+
+    private void SelectAdminRole()
+    {
+        RoleState.SelectRole(AppRole.Admin);
+        Navigation.NavigateTo("admin/candidates");
+    }
+}

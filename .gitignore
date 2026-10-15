@@ -1,0 +1,107 @@
+# ====================================================================
+# myATS Unified .gitignore (.NET 9 + FastAPI + Sensitive Data Filter)
+# ====================================================================
+
+# --------------------------------------------------
+# Explicit Project Overrides (User Directives)
+# --------------------------------------------------
+docs/
+.obsidian/
+GEMINI.md
+.gemini/
+
+# --------------------------------------------------
+# Secrets & Environment Configurations
+# --------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+
+# --------------------------------------------------
+# SQLite Databases & Local Runtime Storage
+# --------------------------------------------------
+*.db
+*.db-wal
+*.db-shm
+ats.db
+ats.db-*
+src/ATS.Blazor/ats.db*
+
+# Ignore all uploaded candidate resumes, but keep the folder structure
+src/ATS.Blazor/wwwroot/uploads/resumes/*
+!src/ATS.Blazor/wwwroot/uploads/resumes/.gitkeep
+
+# --------------------------------------------------
+# .NET 9.0 (ASP.NET Core Blazor) Exclusions
+# --------------------------------------------------
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+_ReSharper*/
+*.DotSettings.user
+
+# --------------------------------------------------
+# Python 3.12+ / FastAPI Exclusions
+# --------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+env.bak/
+venv.bak/
+
+# Testing & Linting
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --------------------------------------------------
+# Operating System & IDE Caches
+# --------------------------------------------------
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
